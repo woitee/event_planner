@@ -96,22 +96,6 @@ export function joinNames(names) {
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
-// ---------------------------------------------------------------- recent events (this device only)
-
-const RECENT_KEY = 'ep:recent';
-export function loadRecent() {
-  try {
-    return JSON.parse(localStorage.getItem(RECENT_KEY)) || [];
-  } catch {
-    return [];
-  }
-}
-export function saveRecent(list) {
-  try {
-    localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 20)));
-  } catch {}
-}
-
 // ---------------------------------------------------------------- ui
 
 let toastTimer;

@@ -1,4 +1,4 @@
-import { api, h, $, fmtWhen, range, avatar, icon, poll, copy, share, toast, loadRecent, saveRecent } from '/static/common.js';
+import { api, h, $, fmtWhen, range, avatar, icon, poll, copy, share, toast } from '/static/common.js';
 
 const app = $('#app');
 const token = location.pathname.split('/').pop();
@@ -39,8 +39,8 @@ function newNotice() {
     h(
       'div',
       {},
-      h('strong', {}, 'This page is your organizer key. '),
-      'Bookmark it or save the link somewhere. There’s no other way back in.',
+      h('strong', {}, 'This link manages this event without a password. '),
+      'Hand it to a co-organizer if you like. You can always get back here from All events with the master password.',
       h('div', {}, h('button', { class: 'btn sm', type: 'button', onclick: () => copy(adminUrl, 'Organizer link copied') }, icon('copy'), 'Copy organizer link')),
     ),
   );
@@ -82,7 +82,7 @@ function shareCard() {
     'section',
     { class: 'card' },
     h('h2', {}, 'Shared link'),
-    h('p', { class: 'hint' }, 'Post it in a group chat. People type their name and answer. They’ll need the password once.'),
+    h('p', { class: 'hint' }, 'Post it in a group chat. People type their name and answer.'),
     h(
       'div',
       { class: 'linkbox' },
@@ -222,7 +222,6 @@ function dangerZone() {
         onclick: async () => {
           if (!confirm(`Delete “${ev.title}” for everyone? This can’t be undone.`)) return;
           await api('DELETE', base);
-          saveRecent(loadRecent().filter((r) => r.adminToken !== token));
           location.href = '/';
         },
       },
@@ -253,11 +252,6 @@ async function remove(p) {
   }
 }
 
-function rememberEvent() {
-  const rest = loadRecent().filter((r) => r.adminToken !== token);
-  saveRecent([{ adminToken: token, title: ev.title, when: ev.when }, ...rest]);
-}
-
 /** Update the live parts without touching forms the organizer may be typing in. */
 function refresh() {
   document.title = `${ev.title} · Organizer`;
@@ -270,7 +264,6 @@ function refresh() {
 try {
   ev = await api('GET', base);
   document.title = `${ev.title} · Organizer`;
-  rememberEvent();
   app.replaceChildren(app.firstElementChild, isNew ? newNotice() : '', summary(), shareCard(), peopleCard(), editCard(), dangerZone());
   poll(async () => {
     try {

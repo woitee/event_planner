@@ -78,6 +78,7 @@ body {
   letter-spacing: 0.01em;
   text-decoration: none;
 }
+.brand > a { display: flex; align-items: center; gap: 8px; color: inherit; text-decoration: none; }
 .brand-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
 .brand .pill { margin-left: auto; }
 
@@ -297,7 +298,15 @@ details.card[open] > summary { margin-bottom: 18px; }
   color: var(--ink); text-decoration: none;
 }
 .recent li:first-child a { border-top: 0; }
-.recent a span:last-child { color: var(--muted); font-size: 14px; flex: none; }
+.recent a > span:last-child { color: var(--muted); font-size: 14px; font-weight: 600; flex: none; }
+.recent a > span.on { color: var(--accent); }
+.recent .ev-title { min-width: 0; display: flex; flex-direction: column; font-weight: 600; }
+.recent .ev-title small { color: var(--muted); font-size: 13px; font-weight: 400; }
+.recent li.muted { padding: 12px 0; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+details.past { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+details.past summary { cursor: pointer; }
+.brand button.pill { min-height: 32px; font-weight: 600; }
 
 /* ---------- toast */
 

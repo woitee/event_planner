@@ -125,10 +125,13 @@ function setReminder(d, link) {
 }
 
 let nameInput;
+let trap;
 function render() {
   const d = data;
   const generic = mode === 'generic';
   nameInput ||= h('input', { id: 'name', placeholder: 'Your name', autocomplete: 'given-name', maxlength: 60, enterkeyhint: 'done' });
+  // Honeypot: invisible to people, tempting to form-filling bots.
+  trap ||= h('input', { name: 'website', tabindex: '-1', autocomplete: 'off', 'aria-hidden': 'true', style: 'position:absolute;left:-9999px;width:1px;height:1px;opacity:0' });
   app.replaceChildren(
     h(
       'div',
@@ -136,7 +139,7 @@ function render() {
       ...header(d),
       h('hr', { class: 'divider' }),
       seatsBlock(d),
-      generic && h('div', { class: 'field', style: 'margin-top:22px' }, h('label', { for: 'name' }, 'Your name'), nameInput),
+      generic && h('div', { class: 'field', style: 'margin-top:22px' }, h('label', { for: 'name' }, 'Your name'), nameInput, trap),
       answerButtons(d),
       h('p', { class: 'error', id: 'error' }),
       resultBlock(d),
@@ -156,6 +159,7 @@ async function respond(status) {
       return;
     }
     body.name = name;
+    if (trap.value) body.website = trap.value;
   }
   busy = true;
   try {
@@ -201,7 +205,6 @@ try {
     } catch {}
   });
 } catch (e) {
-  if (e.status === 401) location.reload();
   // A remembered personal link that no longer exists → forget it, fall back to the generic link.
   if (mode === 'personal') {
     try {

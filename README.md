@@ -7,7 +7,7 @@ Each event has a **minimum** (it's on once that many say yes) and an optional **
 ## Run
 
 ```bash
-cp .env.example .env   # then set APP_PASSWORD
+cp .env.example .env   # then set ADMIN_PASSWORD
 npm start              # http://localhost:3000
 ```
 
@@ -17,9 +17,9 @@ Needs Node 22+. No `npm install`; there are no dependencies. Data lives in `data
 
 | URL | Who | Auth |
 |---|---|---|
-| `/` | you, to create an event | shared password |
+| `/` | organizers: all events + create new | master password (`ADMIN_PASSWORD`) |
 | `/a/<token>` | organizer view | the link itself (keep it private) |
-| `/<code>` (e.g. `/gzc2d`) | generic invite, guest types their name | shared password, once per device |
+| `/<code>` (e.g. `/k7m2qx9fbt`) | generic invite, guest types their name | the link itself |
 | `/i/<token>` | personal invite, name pre-filled, one tap | the link itself |
 
 - **Organizer:** share the generic link, create personal invite links, add people who said yes elsewhere, change anyone's status, and edit or delete the event.

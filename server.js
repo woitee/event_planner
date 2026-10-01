@@ -10,11 +10,10 @@ const PUBLIC = path.join(ROOT, 'public');
 const DATA_DIR = process.env.DATA_DIR || path.join(ROOT, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 const PORT = Number(process.env.PORT) || 3000;
-const PASSWORD = process.env.APP_PASSWORD || 'changeme';
+// The master password creates events and lists all of them. Invite links need no password.
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'changeme-admin';
 
-if (!process.env.APP_PASSWORD) {
-  console.warn('! APP_PASSWORD is not set, using "changeme". Set it before sharing links.');
-}
+if (!process.env.ADMIN_PASSWORD) console.warn('! ADMIN_PASSWORD is not set, using "changeme-admin".');
 
 // ---------------------------------------------------------------- storage
 
@@ -52,7 +51,8 @@ function byInvite(t) {
 
 // No vowels, no look-alikes: short codes can't spell words or be misread.
 const ALPHABET = 'bcdfghjkmnpqrstvwxz23456789';
-function shortCode(len = 5) {
+// 10 chars of a 27-letter alphabet ≈ 47 bits: short enough to share, too many to guess.
+function shortCode(len = 10) {
   for (;;) {
     const code = [...crypto.randomBytes(len)].map((b) => ALPHABET[b % ALPHABET.length]).join('');
     if (!byCode(code)) return code;
@@ -62,8 +62,10 @@ const token = (bytes) => crypto.randomBytes(bytes).toString('base64url');
 
 // ---------------------------------------------------------------- auth
 
-const AUTH_COOKIE = 'ep_auth';
-const authValue = crypto.createHmac('sha256', db.secret).update(PASSWORD).digest('base64url');
+const ADMIN_COOKIE = 'ep_admin';
+// Cookie values derive from the password, so changing a password logs everyone out.
+const sign = (role, pw) => crypto.createHmac('sha256', db.secret).update(`${role}:${pw}`).digest('base64url');
+const adminValue = sign('admin', ADMIN_PASSWORD);
 
 function cookies(req) {
   return Object.fromEntries(
@@ -78,7 +80,8 @@ function safeEqual(a, b) {
   const bb = Buffer.from(String(b));
   return ba.length === bb.length && crypto.timingSafeEqual(ba, bb);
 }
-const isAuthed = (req) => safeEqual(cookies(req)[AUTH_COOKIE] || '', authValue);
+const isMaster = (req) => safeEqual(cookies(req)[ADMIN_COOKIE] || '', adminValue);
+const cookie = (name, value, maxAge = 31536000) => `${name}=${value}; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=Lax`;
 
 // ---------------------------------------------------------------- validation
 
@@ -228,8 +231,8 @@ const page = (res, name) => sendFile(res, path.join(PUBLIC, `${name}.html`));
 const routes = [];
 const route = (method, pattern, handler) => routes.push({ method, pattern, handler });
 
-function requireAuth(req) {
-  if (!isAuthed(req)) throw new HttpError(401, 'Password required.');
+function requireMaster(req) {
+  if (!isMaster(req)) throw new HttpError(401, 'Organizer password required.');
 }
 function adminEventOr404(t) {
   const ev = byAdmin(t);
@@ -238,31 +241,46 @@ function adminEventOr404(t) {
 }
 
 // Pages
-route('GET', /^\/$/, (req, res) => page(res, isAuthed(req) ? 'create' : 'login'));
+route('GET', /^\/$/, (req, res) => page(res, isMaster(req) ? 'create' : 'login'));
 route('GET', /^\/a\/([\w-]+)$/, (req, res) => page(res, 'admin'));
 route('GET', /^\/i\/([\w-]+)$/, (req, res) => page(res, 'invite'));
-route('GET', new RegExp(`^/([${ALPHABET}]{5})$`), (req, res, code) => {
-  if (!byCode(code)) return page(res, 'notfound');
-  return page(res, isAuthed(req) ? 'invite' : 'login');
-});
+route('GET', new RegExp(`^/([${ALPHABET}]{10})$`), (req, res, code) => page(res, byCode(code) ? 'invite' : 'notfound'));
 route('GET', /^\/static\/([\w.-]+)$/, (req, res, file) => sendFile(res, path.join(PUBLIC, file)));
 route('GET', /^\/favicon\.ico$/, (req, res) => sendFile(res, path.join(PUBLIC, 'favicon.svg')));
 
 // Auth
 route('POST', /^\/api\/login$/, async (req, res) => {
   const { password } = await readJson(req);
-  if (!safeEqual(password ?? '', PASSWORD)) {
+  if (!safeEqual(password ?? '', ADMIN_PASSWORD)) {
     await new Promise((r) => setTimeout(r, 600)); // slow down guessing
     throw new HttpError(401, 'That’s not it.');
   }
-  send(res, 200, { ok: true }, {
-    'Set-Cookie': `${AUTH_COOKIE}=${authValue}; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax`,
-  });
+  send(res, 200, { ok: true }, { 'Set-Cookie': cookie(ADMIN_COOKIE, adminValue) });
+});
+
+route('POST', /^\/api\/logout$/, (req, res) => {
+  send(res, 200, { ok: true }, { 'Set-Cookie': cookie(ADMIN_COOKIE, '', 0) });
+});
+
+// All events (master password)
+route('GET', /^\/api\/events$/, (req, res) => {
+  requireMaster(req);
+  const list = events().map((ev) => ({
+    title: ev.title,
+    when: ev.when,
+    end: ev.end,
+    min: ev.min,
+    max: ev.max,
+    going: goingCount(ev),
+    adminToken: ev.adminToken,
+    createdAt: ev.createdAt,
+  }));
+  send(res, 200, list);
 });
 
 // Create
 route('POST', /^\/api\/events$/, async (req, res) => {
-  requireAuth(req);
+  requireMaster(req);
   const fields = eventFields(await readJson(req));
   checkRange(fields);
   const ev = {
@@ -330,17 +348,16 @@ route('DELETE', /^\/api\/admin\/([\w-]+)\/people\/([\w-]+)$/, (req, res, t, id) 
 
 // Generic link (password protected)
 route('GET', /^\/api\/e\/(\w+)$/, (req, res, code) => {
-  requireAuth(req);
   const ev = byCode(code);
   if (!ev) throw new HttpError(404, 'Event not found.');
   send(res, 200, publicEvent(ev));
 });
 
 route('POST', /^\/api\/e\/(\w+)\/respond$/, async (req, res, code) => {
-  requireAuth(req);
   const ev = byCode(code);
   if (!ev) throw new HttpError(404, 'Event not found.');
   const body = await readJson(req);
+  if (body.website) throw new HttpError(400, 'Invalid response.'); // hidden field only bots fill in
   if (!RESPONSES.includes(body.status)) throw new HttpError(400, 'Invalid response.');
   const name = personName(body.name);
   // Same name answers again → treat as the same person instead of a duplicate.

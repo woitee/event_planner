@@ -6,13 +6,26 @@
   <meta name="theme-color" content="#f5f2ec" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#161513" media="(prefers-color-scheme: dark)">
   <meta name="robots" content="noindex">
-  <title>New event</title>
+  <title>Events</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <main class="wrap">
-    <a class="brand" href="/"><span class="brand-dot"></span>Event planner</a>
+    <div class="brand"><a href="/"><span class="brand-dot"></span>Event planner</a><button class="pill btn ghost sm" id="logout" type="button">Log out</button></div>
+
+    <section class="card hidden" id="events-card">
+      <div class="card-head">
+        <h2>All events</h2>
+        <button class="btn primary sm" id="new-event" type="button">+ New event</button>
+      </div>
+      <ul class="recent" id="upcoming"></ul>
+      <details class="past hidden" id="past-wrap">
+        <summary class="muted small">Past events</summary>
+        <ul class="recent" id="past"></ul>
+      </details>
+    </section>
+
     <form class="card" id="create">
       <p class="eyebrow">New event</p>
       <h1>What are we doing?</h1>
@@ -63,10 +76,6 @@
       <button class="btn primary block big" type="submit">Create event</button>
     </form>
 
-    <section class="card hidden" id="recent-card">
-      <h2>Your events on this device</h2>
-      <ul class="recent" id="recent"></ul>
-    </section>
   </main>
   <script type="module" src="/static/create.js"></script>
 </body>
