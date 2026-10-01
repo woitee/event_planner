@@ -1,0 +1,12 @@
+{
+  "name": "event-planner",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tiny event planner: create an event, share a link, see who's in.",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js",
+    "dev": "node --env-file-if-exists=.env --watch server.js"
+  },
+  "engines": { "node": ">=22" }
+}
