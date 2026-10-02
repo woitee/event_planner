@@ -125,6 +125,7 @@ function personRow(p) {
       'div',
       { class: 'actions' },
       select,
+      h('button', { class: 'btn ghost icon', type: 'button', title: 'Rename', 'aria-label': `Rename ${p.name}`, onclick: () => rename(p) }, icon('pencil')),
       h('button', { class: 'btn ghost icon', type: 'button', title: 'Share personal link', 'aria-label': `Share link for ${p.name}`, onclick: () => share(personalUrl(p), nudge) }, icon('share')),
     ),
   );
@@ -240,6 +241,12 @@ async function update(p, patch) {
   } catch (e) {
     toast(e.message);
   }
+}
+
+async function rename(p) {
+  const name = prompt('Name', p.name)?.trim();
+  if (!name || name === p.name) return;
+  await update(p, { name });
 }
 
 async function remove(p) {

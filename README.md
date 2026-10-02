@@ -22,7 +22,7 @@ Needs Node 22+. No `npm install`; there are no dependencies. Data lives in `data
 | `/<code>` (e.g. `/k7m2qx9fbt`) | generic invite, guest types their name | the link itself |
 | `/i/<token>` | personal invite, name pre-filled, one tap | the link itself |
 
-- **Organizer:** share the generic link, create personal invite links, add people who said yes elsewhere, change anyone's status, and edit or delete the event.
+- **Organizer:** share the generic link, create personal invite links, add people who said yes elsewhere, rename anyone (their personal link keeps working), change anyone's status, and edit or delete the event.
 - **Guests:** see what, when and where, who's in, and how many more are needed. They answer **I'm in**, **Remind me later**, or **Can't make it**. *Later* offers a calendar reminder (.ics). *I'm in* offers an "add to calendar" link.
 - After answering via the generic link, the guest's browser switches to their own personal link, so they can change their answer later.
 - Pages refresh every 15s while open.
