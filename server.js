@@ -330,7 +330,14 @@ route('PATCH', /^\/api\/admin\/([\w-]+)\/people\/([\w-]+)$/, async (req, res, t,
   const person = ev.people.find((p) => p.id === id);
   if (!person) throw new HttpError(404, 'Person not found.');
   const body = await readJson(req);
-  if ('name' in body) person.name = personName(body.name);
+  if ('name' in body) {
+    const name = personName(body.name);
+    // The shared link matches answers by name, so two people can't share one.
+    if (ev.people.some((p) => p !== person && p.name.toLowerCase() === name.toLowerCase())) {
+      throw new HttpError(409, `${name} is already on the list.`);
+    }
+    person.name = name;
+  }
   if ('status' in body) {
     if (!STATUSES.includes(body.status)) throw new HttpError(400, 'Invalid status.');
     setStatus(person, body.status);
