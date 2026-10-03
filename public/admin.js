@@ -82,19 +82,18 @@ function shareCard() {
     'section',
     { class: 'card' },
     h('h2', {}, 'Shared link'),
-    h('p', { class: 'hint' }, 'Post it in a group chat. People type their name and answer.'),
+    h(
+      'p',
+      { class: 'hint' },
+      'Post it in a group chat. People type their name and answer. ',
+      h('a', { href: url, target: '_blank', style: 'color:var(--accent)' }, 'Open it'),
+      ' to see what guests see.',
+    ),
     h(
       'div',
       { class: 'linkbox' },
       input,
       h('button', { class: 'btn', type: 'button', onclick: () => share(url, `${ev.title}: are you in?`) }, icon('share'), 'Share'),
-    ),
-    h(
-      'p',
-      { class: 'hint' },
-      'Or ',
-      h('a', { href: url, target: '_blank', style: 'color:var(--accent)' }, 'open it'),
-      ' to see what guests see.',
     ),
   );
 }
